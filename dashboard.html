@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Rumah Pintar</title>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@500;700&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#dfe5e2;--panel:#f6f8f7;--ink:#1c2826;--mute:#5f6f6b;--line:#c5cfcb;--track:#cfd8d4;
+--lamp:#e9a02b;--curtain:#6a5fc1;--heater:#d4553a;--ac:#2f86b8;--ok:#2e9e6b;--bad:#c0392b}
+@media(prefers-color-scheme:dark){:root:not([data-theme=light]){--bg:#121a19;--panel:#1b2624;--ink:#e6efec;--mute:#8fa19c;--line:#2c3a37;--track:#2c3a37}}
+:root[data-theme=dark]{--bg:#121a19;--panel:#1b2624;--ink:#e6efec;--mute:#8fa19c;--line:#2c3a37;--track:#2c3a37}
+*{box-sizing:border-box;margin:0}
+body::before{content:"";position:fixed;inset:0;z-index:-1;background:var(--logo) center/min(70vmin,520px) no-repeat;opacity:.16;pointer-events:none}
+.brand{display:flex;align-items:center;gap:12px}
+.brand img{width:44px;height:44px;object-fit:contain}
+.hbtns{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}
+html{height:100%}
+body{min-height:100%;background:var(--bg);color:var(--ink);font:16px/1.45 system-ui,-apple-system,"Segoe UI",sans-serif;
+padding:calc(16px + env(safe-area-inset-top,0px)) 16px calc(24px + env(safe-area-inset-bottom,0px))}
+h1,h2,.big{font-family:"Bricolage Grotesque",system-ui,sans-serif}
+main{max-width:960px;margin:0 auto}
+header{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:16px}
+h1{font-size:1.5rem}
+.status{display:flex;align-items:center;gap:8px;font-size:.85rem;color:var(--mute)}
+.dot{width:10px;height:10px;border-radius:50%;background:var(--bad)}
+.dot.on{background:var(--ok)}
+.ibtn{border:1px solid var(--line);background:var(--panel);color:var(--ink);border-radius:8px;padding:6px 10px;font:inherit;font-size:.85rem;cursor:pointer}
+.layout{display:grid;grid-template-columns:minmax(0,5fr) minmax(0,7fr);gap:16px}
+@media(max-width:760px){.layout{grid-template-columns:1fr}}
+.panel{background:color-mix(in srgb,var(--panel) 88%,transparent);backdrop-filter:blur(3px);border:1px solid var(--line);border-radius:14px;padding:20px}
+.temp .big{font-size:5rem;line-height:1;font-weight:700}
+.temp .big small{font-size:1.6rem;font-weight:500;color:var(--mute)}
+.temp p{color:var(--mute)}
+.temp .cond{font-size:1.1rem;color:var(--ink);margin:6px 0 2px}
+svg.spark{width:100%;height:80px;margin-top:14px;display:block}
+.hum{display:flex;justify-content:space-between;border-top:1px solid var(--line);margin-top:14px;padding-top:12px}
+.sec{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:10px}
+.sec h2{font-size:1.1rem}
+.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.tile{--c:var(--lamp);display:flex;align-items:center;justify-content:space-between;gap:10px;background:color-mix(in srgb,var(--c) 14%,var(--panel));border:1px solid color-mix(in srgb,var(--c) 45%,var(--line));transition:background .2s;border-radius:12px;padding:12px 14px}
+.tile b{display:block;font-weight:600}
+.tile span{font-size:.8rem;color:var(--mute)}
+.tile.on{background:color-mix(in srgb,var(--c) 32%,var(--panel))}
+.rocker{flex:none;width:56px;height:34px;border-radius:9px;border:1px solid var(--line);background:var(--track);position:relative;cursor:pointer;padding:0;transition:background .2s}
+.rocker::after{content:"";position:absolute;top:3px;left:3px;width:26px;height:26px;border-radius:6px;background:var(--panel);box-shadow:0 1px 2px rgba(0,0,0,.3);transition:transform .2s}
+.rocker[aria-checked=true]{background:var(--c)}
+.rocker[aria-checked=true]::after{transform:translateX(22px)}
+.rocker:focus-visible,.ibtn:focus-visible{outline:3px solid var(--ac);outline-offset:2px}
+.rocker.pend{opacity:.6}
+.dev{margin-top:16px}
+dialog{border:1px solid var(--line);border-radius:14px;background:var(--panel);color:var(--ink);padding:20px;width:min(440px,92vw)}
+dialog::backdrop{background:rgba(0,0,0,.45)}
+label{display:block;font-size:.85rem;color:var(--mute);margin:12px 0 4px}
+input{width:100%;padding:10px;border-radius:8px;border:1px solid var(--line);background:var(--bg);color:var(--ink);font:inherit}
+.row{display:flex;gap:8px;justify-content:flex-end;margin-top:16px}
+.msg{font-size:.85rem;color:var(--bad);min-height:1.2em;margin-top:8px}
+@media(prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<main>
+<header>
+  <div class="brand"><img id="hlogo" alt="Logo UNY" hidden><div><h1>Rumah Pintar</h1>
+  <div class="status"><span class="dot" id="dot"></span><span id="stat">Belum terhubung</span></div></div></div>
+  <div class="hbtns"><button class="ibtn" id="btnLogo">Ganti logo</button><input type="file" id="fLogo" accept="image/*" hidden><button class="ibtn" id="btnSet">Pengaturan</button></div>
+</header>
+
+<div class="layout">
+  <section class="panel temp" aria-live="polite">
+    <p>Suhu ruangan</p>
+    <div class="big"><span id="t">--</span><small> °C</small></div>
+    <div class="cond" id="cond">Menunggu data</div>
+    <p id="upd"></p>
+    <svg class="spark" id="spark" viewBox="0 0 300 80" preserveAspectRatio="none" role="img" aria-label="Grafik suhu terakhir"></svg>
+    <div class="hum"><span>Kelembaban</span><b id="h">-- %</b></div>
+  </section>
+
+  <section>
+    <div class="panel">
+      <div class="sec"><h2>Lampu</h2><button class="ibtn" id="allOn">Nyalakan semua</button></div>
+      <div class="grid" id="lamps"></div>
+    </div>
+    <div class="panel dev"><div class="sec"><h2>Perangkat</h2></div>
+      <div class="grid" id="devs"></div>
+    </div>
+  </section>
+</div>
+</main>
+
+<dialog id="dlg">
+  <h2>Hubungkan ke Firebase</h2>
+  <label for="url">URL Realtime Database</label>
+  <input id="url" placeholder="https://nama-project-default-rtdb.firebaseio.com">
+  <label for="sec">Database secret (kosongkan jika rules terbuka)</label>
+  <input id="sec" type="password" autocomplete="off">
+  <div class="msg" id="err"></div>
+  <div class="row"><button class="ibtn" id="cancel">Tutup</button><button class="ibtn" id="save">Simpan dan hubungkan</button></div>
+</dialog>
+
+<script>
+// ====== Ubah nama/jenis perangkat di sini (key harus sama dengan di ESP32 & Firebase) ======
+const LAMPS=[["lampu1","Lampu ruang tamu","#e9a02b"],["lampu2","Lampu kamar","#d6467c"],["lampu3","Lampu dapur","#2e9e6b"]];
+const DEVS=[["curtain","Gorden","#6a5fc1","Terbuka","Tertutup"],["waterheater","Water heater","#d4553a","Menyala","Mati"],["ac","AC","#2f86b8","Menyala","Mati"]];
+const POLL=2000, OFFLINE_AFTER=20000;
+
+let cfg={url:"",sec:""}, state={}, pending={}, hist=[], lastHB=null, lastHBchange=0, lastSuhu=null;
+const $=id=>document.getElementById(id);
+const store={get(k){try{return localStorage.getItem(k)}catch(e){return null}},set(k,v){try{localStorage.setItem(k,v)}catch(e){}}};
+
+function tile(key,name,color,onTxt,offTxt){
+  const d=document.createElement("div");d.className="tile";
+  d.innerHTML=`<div><b>${name}</b><span id="s_${key}">${offTxt||"Mati"}</span></div>`;
+  const b=document.createElement("button");b.className="rocker";b.id="r_"+key;b.setAttribute("role","switch");
+  b.setAttribute("aria-checked","false");b.setAttribute("aria-label",name);
+  if(color)d.style.setProperty("--c",color);
+  b.onclick=()=>toggle(key);d.appendChild(b);d.dataset.on=onTxt||"Menyala";d.dataset.off=offTxt||"Mati";return d;
+}
+LAMPS.forEach(l=>$("lamps").appendChild(tile(l[0],l[1],l[2],"Menyala","Mati")));
+DEVS.forEach(d=>$("devs").appendChild(tile(d[0],d[1],d[2],d[3],d[4])));
+
+function render(){
+  [...LAMPS,...DEVS].forEach(([k])=>{
+    const on=+state[k]===1,r=$("r_"+k);if(!r)return;
+    r.setAttribute("aria-checked",on);r.classList.toggle("pend",!!pending[k]);
+    const t=r.parentElement;t.classList.toggle("on",on);$("s_"+k).textContent=on?t.dataset.on:t.dataset.off;
+  });
+  const t=parseFloat(state.suhu);
+  if(!isNaN(t)){
+    $("t").textContent=t.toFixed(1);
+    $("cond").textContent=t<=25?"Sejuk":t<=30?"Nyaman":"Panas";
+  }
+  const h=parseFloat(state.kelembaban);$("h").textContent=isNaN(h)?"-- %":h.toFixed(0)+" %";
+  drawSpark();
+}
+function drawSpark(){
+  const s=$("spark");if(hist.length<2){s.innerHTML="";return}
+  const mn=Math.min(...hist)-.5,mx=Math.max(...hist)+.5;
+  const pts=hist.map((v,i)=>`${(i/(hist.length-1))*300},${76-((v-mn)/(mx-mn))*70}`).join(" ");
+  s.innerHTML=`<polyline points="${pts}" fill="none" stroke="var(--heater)" stroke-width="2.5" vector-effect="non-scaling-stroke" stroke-linejoin="round"/>`;
+}
+function setStatus(online,text){$("dot").classList.toggle("on",online);$("stat").textContent=text}
+
+function base(){return cfg.url.replace(/\/+$/,"")+"/smarthome.json"+(cfg.sec?"?auth="+encodeURIComponent(cfg.sec):"")}
+async function write(obj){
+  const r=await fetch(base(),{method:"PATCH",headers:{"Content-Type":"application/json"},body:JSON.stringify(obj)});
+  if(!r.ok)throw new Error("HTTP "+r.status);
+}
+async function toggle(key){
+  if(!cfg.url){openDlg();return}
+  const v=+state[key]===1?0:1;state[key]=v;pending[key]=Date.now();render();
+  try{await write({[key]:v})}catch(e){delete pending[key];state[key]=v?0:1;render();setStatus(false,"Gagal mengirim perintah")}
+}
+$("allOn").onclick=async()=>{
+  if(!cfg.url){openDlg();return}
+  const any=LAMPS.some(l=>+state[l[0]]!==1),v=any?1:0,o={};
+  LAMPS.forEach(l=>{o[l[0]]=v;state[l[0]]=v;pending[l[0]]=Date.now()});render();
+  $("allOn").textContent=v?"Matikan semua":"Nyalakan semua";
+  try{await write(o)}catch(e){setStatus(false,"Gagal mengirim perintah")}
+};
+
+async function poll(){
+  if(!cfg.url)return;
+  try{
+    const r=await fetch(base(),{cache:"no-store"});
+    if(!r.ok)throw new Error(r.status===401||r.status===403?"Akses ditolak (cek rules/secret)":"HTTP "+r.status);
+    const d=await r.json()||{},now=Date.now();
+    for(const k in d){
+      if(pending[k]&&now-pending[k]<4000)continue;delete pending[k];state[k]=d[k];
+    }
+    if(d.suhu!==undefined&&d.suhu!==lastSuhu){lastSuhu=d.suhu;hist.push(+d.suhu);if(hist.length>60)hist.shift();$("upd").textContent="Diperbarui "+new Date().toLocaleTimeString("id-ID")}
+    if(d.heartbeat!==undefined&&d.heartbeat!==lastHB){lastHB=d.heartbeat;lastHBchange=now}
+    const dev=lastHB!==null&&now-lastHBchange<OFFLINE_AFTER;
+    setStatus(dev,dev?"ESP32 online":"Terhubung ke Firebase, ESP32 offline");
+    $("allOn").textContent=LAMPS.some(l=>+state[l[0]]===1)?"Matikan semua":"Nyalakan semua";
+    render();
+  }catch(e){setStatus(false,e.message==="Failed to fetch"?"Tidak ada koneksi internet":e.message)}
+}
+
+function openDlg(){$("url").value=cfg.url;$("sec").value=cfg.sec;$("err").textContent="";$("dlg").showModal()}
+$("btnSet").onclick=openDlg;$("cancel").onclick=()=>$("dlg").close();
+$("save").onclick=()=>{
+  const u=$("url").value.trim();
+  if(!/^https:\/\/.+\.(firebaseio\.com|firebasedatabase\.app)/.test(u)){$("err").textContent="URL harus berakhiran firebaseio.com atau firebasedatabase.app";return}
+  cfg={url:u,sec:$("sec").value.trim()};store.set("sh_cfg",JSON.stringify(cfg));$("dlg").close();setStatus(false,"Menghubungkan...");poll();
+};
+
+// ====== Logo UNY: taruh file "logo-uny.png" satu folder dengan dashboard.html, atau pakai tombol "Ganti logo" ======
+function setLogo(src){
+  document.documentElement.style.setProperty("--logo",'url("'+src+'")');
+  const h=$("hlogo");h.onload=()=>{h.hidden=false};h.onerror=()=>{h.hidden=true};h.src=src;
+}
+setLogo(store.get("sh_logo")||"logo-uny.png");
+$("btnLogo").onclick=()=>$("fLogo").click();
+$("fLogo").onchange=e=>{
+  const f=e.target.files[0];if(!f)return;
+  const img=new Image(),u=URL.createObjectURL(f);
+  img.onload=()=>{
+    const m=Math.min(1,600/Math.max(img.width,img.height)),c=document.createElement("canvas");
+    c.width=img.width*m;c.height=img.height*m;c.getContext("2d").drawImage(img,0,0,c.width,c.height);
+    const d=c.toDataURL("image/png");store.set("sh_logo",d);setLogo(d);URL.revokeObjectURL(u);
+  };img.src=u;
+};
+
+try{cfg=JSON.parse(store.get("sh_cfg"))||cfg}catch(e){}
+render();
+if(cfg.url){poll()}else{setStatus(false,"Belum terhubung, buka Pengaturan");setTimeout(openDlg,300)}
+setInterval(poll,POLL);
+</script>
+</body>
+</html>
